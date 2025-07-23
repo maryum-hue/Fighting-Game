@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fighting Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            background-image: url('http://twistedsifter.com/wp-content/uploads/2013/05/animated-gifs-of-fighting-game-backgrounds-5.gif');
+            background-repeat: no-repeat;
+            height: 100vh;
+            background-size: cover;
+            background-position: bottom;
+        }
+
+        #character1,
+        #character2 {
+            position: absolute;
+            bottom: 0;
+        }
+
+        #character1 {
+            left: 0;
+            height: 500px;
+        }
+
+        #character2 {
+            left: 600px;
+            height: 440px;     
+            transform: scaleX(-1);
+        }
+
+        .health-bars {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 200px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .health-bar {
+            width: 300px;
+            height: 30px;
+            background: #444;
+            border: 2px solid #fff;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #0f0, #ff0, #f00);
+            transition: width 0.2s;
+        }
+
+        .player-name {
+            position: absolute;
+            top: -25px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px black;
+        }
+
+        #result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 72px;
+            text-shadow: 4px 4px 8px black;
+            z-index: 100;
+            display: none;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+        }
+
+        #blockMessage {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px black;
+            z-index: 100;
+            display: none;
+            font-family: 'Arial', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="bgm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+
+    <div class="container">
+        <h1 id="result"></h1>
+        <h2 id="blockMessage"></h2>
+        
+        <div class="health-bars">
+            <div class="health-bar player1">
+                <div class="player-name">Player 1</div>
+                <div class="health-fill" id="health1"></div>
+            </div>
+            <div class="health-bar player2">
+                <div class="player-name">Player 2</div>
+                <div class="health-fill" id="health2"></div>
+            </div>
+        </div>
+        
+        <img id="character1" src="https://www.fightersgeneration.com/np5/char/ssf2hd/akuma-hdstance.gif" alt="">
+        <img id="character2" src="https://www.fightersgeneration.com/characters/duolon-stance1.gif" alt="">
+    </div>
+
+    <script>
+        // All the game stuff goes here
+        const gameStuff = {
+            health1: 100,
+            health2: 100,
+            char1Jumping: false,
+            char2Blocking: false,
+            moveForward: false,
+            moveBackward: false,
+            moveForward2: false,
+            moveBackward2: false,
+            ctrlPressed: false,
+            shiftPressed: false,
+            char1Pos: 0,  // player 1 position
+            char2Pos: 600, // player 2 start position
+            gameDone: false,
+            musicOn: false
+        };
+
+        // Grab all the HTML things we need
+        const player1 = document.getElementById("character1");
+        const player2 = document.getElementById("character2");
+        const hpBar1 = document.getElementById("health1");
+        const hpBar2 = document.getElementById("health2");
+        const winnerText = document.getElementById("result");
+        const blockText = document.getElementById("blockMessage");
+        const bgMusic = document.getElementById("bgm");
+
+        // All the cool character animations
+        const charGifs = {
+            akuma: {
+                normal: "https://www.fightersgeneration.com/np5/char/ssf2hd/akuma-hdstance.gif",
+                jump: "https://www.fightersgeneration.com/characters/aku-jumpu.gif",
+                punch: "https://www.fightersgeneration.com/characters/akuma-ts-fp.gif",
+                teleport: "https://www.fightersgeneration.com/characters/akuma-ts-tele.gif"
+            },
+            duolon: {
+                normal: "https://www.fightersgeneration.com/characters/duolon-stance1.gif",
+                block: "https://www.fightersgeneration.com/characters/duo-souls.gif",
+                attack: "https://www.fightersgeneration.com/characters/duolon-a1.gif",
+                super: "https://www.fightersgeneration.com/characters/duo-super.gif",
+                jump: "https://fightersgeneration.com/characters/duo-airkicks.gif"
+            }
+        };
+
+        // Start the game duh
+        function startGameBro() {
+            // Get who's playing from last time or use defaults
+            const p1Char = localStorage.getItem('player1') || 'akuma';
+            const p2Char = localStorage.getItem('player2') || 'duolon';
+            
+            // Set up the characters
+            player1.src = charGifs[p1Char].normal;
+            player2.src = charGifs[p2Char].normal;
+            
+            // Show health bars
+            updateHP();
+            
+            // Turn on the music
+            bgMusic.volume = 0.3;
+            bgMusic.play();
+            gameStuff.musicOn = true;
+            
+            // Let's get this party started
+            requestAnimationFrame(gameTick);
+        }
+
+        // Make health bars match the numbers
+        function updateHP() {
+            hpBar1.style.width = gameStuff.health1 + "%";
+            hpBar2.style.width = gameStuff.health2 + "%";
+            
+            // Check if someone died
+            if (gameStuff.health1 <= 0 || gameStuff.health2 <= 0) {
+                gameOverMan();
+            }
+        }
+
+        // When someone wins
+        function gameOverMan() {
+            gameStuff.gameDone = true;
+            winnerText.style.display = "block";
+            
+            if (gameStuff.health1 <= 0) {
+                winnerText.textContent = "Player 2 Wins!";
+            } else {
+                winnerText.textContent = "Player 1 Wins!";
+            }
+            
+            // Shut off music
+            bgMusic.pause();
+            gameStuff.musicOn = false;
+            
+            // Let them play again
+            setTimeout(() => {
+                winnerText.textContent += "\nPress R to restart";
+            }, 1000);
+        }
+
+        // Start over fresh
+        function resetAll() {
+            gameStuff.health1 = 100;
+            gameStuff.health2 = 100;
+            gameStuff.char1Jumping = false;
+            gameStuff.char2Blocking = false;
+            gameStuff.char1Pos = 0;
+            gameStuff.char2Pos = 600;
+            gameStuff.gameDone = false;
+            
+            player1.src = charGifs.akuma.normal;
+            player2.src = charGifs.duolon.normal;
+            player1.style.left = "0px";
+            player2.style.left = "600px";
+            
+            winnerText.style.display = "none";
+            blockText.style.display = "none";
+            
+            updateHP();
+            
+            if (!gameStuff.musicOn) {
+                bgMusic.currentTime = 0;
+                bgMusic.play();
+                gameStuff.musicOn = true;
+            }
+            
+            requestAnimationFrame(gameTick);
+        }
+
+        // Check if players are touching
+        function areTheyHitting() {
+            const p1Rect = player1.getBoundingClientRect();
+            const p2Rect = player2.getBoundingClientRect();
+            
+            return !(
+                p1Rect.right < p2Rect.left || 
+                p1Rect.left > p2Rect.right || 
+                p1Rect.bottom < p2Rect.top || 
+                p1Rect.top > p2Rect.bottom
+            );
+        }
+
+        // Main game loop thingy
+        function gameTick() {
+            if (gameStuff.gameDone) return;
+            
+            // Move player 1 around
+            if (gameStuff.moveForward) {
+                gameStuff.char1Pos += 5;
+                if (gameStuff.char1Pos > window.innerWidth - 200) {
+                    gameStuff.char1Pos = window.innerWidth - 200;
+                }
+            }
+            if (gameStuff.moveBackward) {
+                gameStuff.char1Pos -= 5;
+                if (gameStuff.char1Pos < 0) {
+                    gameStuff.char1Pos = 0;
+                }
+            }
+            player1.style.left = gameStuff.char1Pos + "px";
+            
+            // Move player 2 around
+            if (gameStuff.moveForward2) {
+                gameStuff.char2Pos += 5;
+                if (gameStuff.char2Pos > window.innerWidth - 200) {
+                    gameStuff.char2Pos = window.innerWidth - 200;
+                }
+            }
+            if (gameStuff.moveBackward2) {
+                gameStuff.char2Pos -= 5;
+                if (gameStuff.char2Pos < 0) {
+                    gameStuff.char2Pos = 0;
+                }
+            }
+            player2.style.left = gameStuff.char2Pos + "px";
+            
+            // Don't let them get too close
+            if (Math.abs(gameStuff.char1Pos - gameStuff.char2Pos) < 150) {
+                if (gameStuff.char1Pos < gameStuff.char2Pos) {
+                    gameStuff.char1Pos = gameStuff.char2Pos - 150;
+                } else {
+                    gameStuff.char2Pos = gameStuff.char1Pos - 150;
+                }
+            }
+            
+            requestAnimationFrame(gameTick);
+        }
+
+        // Listen for button presses
+        window.addEventListener("keydown", function (e) {
+            if (gameStuff.gameDone && e.key.toLowerCase() === 'r') {
+                resetAll();
+                return;
+            }
+            
+            if (e.key === "d") gameStuff.moveForward = true;
+            if (e.key === "a") gameStuff.moveBackward = true;
+            
+            // Player 1 controls
+            if (e.key === "w" && !gameStuff.char1Jumping) {
+                gameStuff.char1Jumping = true;
+                player1.src = charGifs.akuma.jump;
+                setTimeout(() => { 
+                    player1.src = charGifs.akuma.normal; 
+                    gameStuff.char1Jumping = false; 
+                }, 1000);
+            }
+            
+            if (e.key === "c") {
+                player1.src = charGifs.akuma.punch;
+                setTimeout(() => { 
+                    player1.src = charGifs.akuma.normal; 
+                    if (areTheyHitting() && !gameStuff.char2Blocking) {
+                        gameStuff.health2 -= 10;
+                        updateHP();
+                    }
+                }, 500);
+            }
+            
+            if (e.key === "Control") {
+                gameStuff.ctrlPressed = true;
+                player1.src = charGifs.akuma.teleport;
+                setTimeout(() => { 
+                    player1.src = charGifs.akuma.normal; 
+                    if (areTheyHitting() && !gameStuff.char2Blocking) {
+                        gameStuff.health2 -= 20;
+                        updateHP();
+                    }
+                }, 500);
+            }
+            
+            // Player 2 controls
+            if (e.key === "ArrowRight") gameStuff.moveForward2 = true;
+            if (e.key === "ArrowLeft") gameStuff.moveBackward2 = true;
+            
+            if (e.key === "ArrowUp") {
+                gameStuff.char2Blocking = true;
+                player2.src = charGifs.duolon.block;
+                blockText.style.display = "block";
+                blockText.textContent = "BLOCKING!";
+                setTimeout(() => { 
+                    player2.src = charGifs.duolon.normal; 
+                    gameStuff.char2Blocking = false; 
+                    blockText.style.display = "none";
+                }, 1000);
+            }
+            
+            if (e.key === "0") {
+                player2.src = charGifs.duolon.attack;
+                setTimeout(() => { 
+                    player2.src = charGifs.duolon.normal; 
+                    if (areTheyHitting() && !gameStuff.char1Jumping) {
+                        gameStuff.health1 -= 15;
+                        updateHP();
+                    }
+                }, 500);
+            }
+            
+            if (e.key === "Shift") {
+                gameStuff.shiftPressed = true;
+                player2.src = charGifs.duolon.super;
+                setTimeout(() => { 
+                    player2.src = charGifs.duolon.normal; 
+                    if (areTheyHitting() && !gameStuff.char1Jumping) {
+                        gameStuff.health1 -= 25;
+                        updateHP();
+                    }
+                }, 800);
+            }
+        });
+
+        // Listen for button releases
+        window.addEventListener("keyup", function (e) {
+            if (e.key === "d") gameStuff.moveForward = false;
+            if (e.key === "a") gameStuff.moveBackward = false;
+            if (e.key === "ArrowRight") gameStuff.moveForward2 = false;
+            if (e.key === "ArrowLeft") gameStuff.moveBackward2 = false;
+            if (e.key === "Control") gameStuff.ctrlPressed = false;
+            if (e.key === "Shift") gameStuff.shiftPressed = false;
+        });
+
+        // Kick things off when page loads
+        window.onload = startGameBro;
+    </script>
+</body>
+</html>

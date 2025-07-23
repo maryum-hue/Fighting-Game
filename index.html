@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FIGHTING GAME</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('http://twistedsifter.com/wp-content/uploads/2013/05/animated-gifs-of-fighting-game-backgrounds-27.gif') center/cover no-repeat;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* CRT scanlines */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+
+    /* CRT vignette effect */
+    body::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.7) 100%);
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 20px 0;
+      text-shadow: 0 0 10px #f00, 0 0 20px #f00;
+      z-index: 1;
+    }
+
+    .vs {
+      font-size: 80px;
+      margin: 30px 0;
+      text-shadow: 0 0 20px #fff, 0 0 40px #f00;
+      animation: flicker 1.5s infinite alternate;
+      z-index: 1;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    .characters {
+      display: flex;
+      gap: 80px;
+      z-index: 1;
+    }
+
+    .character {
+      background: rgba(0,0,0,0.5);
+      padding: 20px;
+      border-radius: 10px;
+      border: 3px solid #fff;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 0 20px #fff;
+      transition: transform 0.3s;
+    }
+
+    .character:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px #f00;
+    }
+
+    .character h2 {
+      margin-bottom: 10px;
+    }
+
+    .character img {
+      display: block;
+      margin: 0 auto 10px;
+      height: 150px;
+      border: 2px solid #fff;
+      image-rendering: pixelated;
+    }
+
+    .moves {
+      margin-top: 20px;
+    }
+
+    .move {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .move img {
+      height: 50px;
+      margin-right: 10px;
+      image-rendering: pixelated;
+    }
+.start-btn {
+  margin-top: 40px;
+  padding: 20px 60px;
+  font-size: 24px;
+  cursor: pointer;
+  background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvEef5cFPchR4Kc7hSweCE6CyPgnO9aleFuQ&s') center/cover no-repeat; /* ✅ Your image here */
+  color: #fff; /* Keep if your image needs text to stand out */
+  border: none; /* Remove border if your image has its own frame */
+  border-radius: 5px; /* Optional: adjust if needed */
+  box-shadow: 0 0 10px rgba(255,255,255,0.2); /* Softer glow */
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 1;
+  font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
+  background-size: cover;
+  background-position: center;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+.start-btn {
+  animation: none; /* Remove flicker if you don't want it */
+}
+
+
+   
+    /* Character selection highlight */
+    .selected {
+      background: rgba(255,0,0,0.3);
+      box-shadow: 0 0 30px #f00;
+    }
+
+    /* Screen flicker animation */
+    @keyframes screenFlicker {
+      0% { opacity: 1; }
+      10% { opacity: 0.9; }
+      20% { opacity: 1; }
+      30% { opacity: 0.95; }
+      40% { opacity: 1; }
+      50% { opacity: 0.98; }
+      60% { opacity: 1; }
+      70% { opacity: 0.99; }
+      80% { opacity: 1; }
+      90% { opacity: 0.97; }
+      100% { opacity: 1; }
+    }
+
+    body {
+      animation: screenFlicker 5s infinite;
+    }
+  </style>
+</head>
+<body>
+  <h1>PLAYER SELECT</h1>
+  <div class="characters">
+    <!-- Character 1 -->
+    <div class="character" onclick="selectCharacter(this, 'akuma')">
+      <h2>AKUMA</h2>
+      <img src="https://www.fightersgeneration.com/np5/char/ssf2hd/akuma-hdstance.gif" alt="Akuma">
+      <div class="moves">
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/aku-jumpu.gif" alt="Jump">
+          <span>Jump [W]</span>
+        </div>
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/akuma-ts-fp.gif" alt="Punch">
+          <span>Punch [C]</span>
+        </div>
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/akuma-ts-tele.gif" alt="Teleport">
+          <span>Teleport [CTRL]</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <!-- Character 2 -->
+    <div class="character" onclick="selectCharacter(this, 'duolon')">
+      <h2>DUOLON</h2>
+      <img src="https://www.fightersgeneration.com/characters/duolon-stance1.gif" alt="Duolon">
+      <div class="moves">
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/duo-souls.gif" alt="Soul Attack">
+          <span>Soul Attack [↑]</span>
+        </div>
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/duolon-a1.gif" alt="Attack">
+          <span>Attack [0]</span>
+        </div>
+        <div class="move">
+          <img src="https://www.fightersgeneration.com/characters/duo-super.gif" alt="Super">
+          <span>Super [Shift]</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">PRESS START</button>
+
+  <script>
+    let selectedCharacters = [];
+    
+    function selectCharacter(element, character) {
+      // Toggle selection
+      element.classList.toggle('selected');
+      
+      // Update selected characters array
+      const index = selectedCharacters.indexOf(character);
+      if (index === -1) {
+        selectedCharacters.push(character);
+      } else {
+        selectedCharacters.splice(index, 1);
+      }
+      
+      console.log('Selected characters:', selectedCharacters);
+    }
+    
+    function startGame() {
+      if (selectedCharacters.length < 2) {
+        alert('Please select 2 characters!');
+        return;
+      }
+      
+      // Store selected characters in localStorage
+      localStorage.setItem('player1', selectedCharacters[0]);
+      localStorage.setItem('player2', selectedCharacters[1]);
+      
+      // Redirect to game page (you'll need to create this)
+      window.location.href = "game.html";
+    }
+    
+    // Add keyboard controls
+    document.addEventListener('keydown', function(e) {
+      // Space or Enter to start game
+      if (e.code === 'Space' || e.code === 'Enter') {
+        startGame();
+      }
+    });
+  </script>
+</body>
+</html>
